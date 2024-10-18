@@ -5,6 +5,7 @@ def read_cpu_usage():
     cpu_t =psutil.cpu_times()
     urs_sp_cputime = cpu_t.user
     idle_time = cpu_t.idle
+    cpu_dict= {"idle_time": cpu_t.idle, "user_time": cpu_t.user}
     return urs_sp_cputime, idle_time
 
 if __name__ == "__main__":
