@@ -1,12 +1,16 @@
-import numpy
 import random
 import time
+
+import numpy
 import sklearn
-import pandas
-from sklearn.model_selection import train_test_split
+from pandas import read_csv
+from pyod.models.abod import ABOD
+from pyod.models.copod import COPOD
+from pyod.models.hbos import HBOS
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import VotingClassifier, StackingClassifier, RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -23,43 +27,37 @@ def current_ms() -> int:
     """
     return round(time.time() * 1000)
 
+
 if __name__ == "__main__":
     """
-    Main of the monitor
+    Main of the data analysis
     """
-    #0 load dataset PANDAS/NUMPY
-    my_dataset = pandas.read_csv("./labelled_dataset.csv")
+
+    # load dataset PANDAS / NUMPY
+    my_dataset = read_csv("./input_folder/labelled_dataset.csv")
     label_obj = my_dataset["label"]
     data_obj = my_dataset.drop(columns=["label", "time", "datetime"])
+    # Note that unsupervised algorithms answer with 0/1.
+    # This, I have to convert my normal/anomaly labels into 0/1
+    label_obj = numpy.where(label_obj == "normal", 0, 1)
 
-    #1 SPLIT DATASET
+    # split dataset
     train_data, test_data, train_label, test_label = \
-          train_test_split(data_obj, label_obj, test_size=0.5)
-    
-    # Set of classifiers that I want to run and compare
-    classifiers = [VotingClassifier(estimators=[('lda', LinearDiscriminantAnalysis()),
-                                                ('nb', GaussianNB()),
-                                                ('dt', DecisionTreeClassifier())]),
-                   StackingClassifier(estimators=[('lda', LinearDiscriminantAnalysis()),
-                                                  ('nb', GaussianNB()),
-                                                  ('dt', DecisionTreeClassifier())],
-                                      final_estimator=RandomForestClassifier(n_estimators=10)),
-                   DecisionTreeClassifier(),
-                   GaussianNB(),
-                   LinearDiscriminantAnalysis(),
-                   KNeighborsClassifier(n_neighbors=11),
-                   RandomForestClassifier(n_estimators=10),
-                   RandomForestClassifier(n_estimators=3),
-                   GradientBoostingClassifier()]
+        train_test_split(data_obj, label_obj, test_size=0.5)
 
-      #3 TRAIN CLASSIFIER
+    # choose classifier from PYOD, set of classifiers that I want to run and compare
+    classifiers = [HBOS(contamination=0.5, n_bins=20),
+                   HBOS(contamination=0.5, n_bins=10),
+                   ABOD(contamination=0.5),
+                   COPOD(contamination=0.5)]
+
     for clf in classifiers:
         # Training an algorithm
         before_train = current_ms()
-        clf = clf.fit(train_data, train_label)
+        clf = clf.fit(train_data)
         after_train = current_ms()
 
-        # Testing the trained model
+        # Testing the trained model.
         predicted_labels = clf.predict(test_data)
         end = current_ms()
 
