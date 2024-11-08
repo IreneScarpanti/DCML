@@ -30,7 +30,8 @@ if __name__ == "__main__":
     #0 load dataset PANDAS/NUMPY
     my_dataset = pandas.read_csv("./labelled_dataset.csv")
     label_obj = my_dataset["label"]
-    data_obj = my_dataset.drop(columns=["label", "time", "datetime"])
+    data_obj = my_dataset.drop(columns=["label", "time", "datetime"]) 
+
 
     #1 SPLIT DATASET
     train_data, test_data, train_label, test_label = \
